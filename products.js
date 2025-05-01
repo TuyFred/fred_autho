@@ -14,6 +14,23 @@ router.get('/', (req, res) => {
   });
 });
 
+// ✅ Get product by id
+router.get('/:pid', (req, res) => {
+  const pid = req.params.pid;
+  const query = 'SELECT * FROM products WHERE pid = ?';
+
+  db.get(query, [pid], (err, row) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ message: 'Database error' });
+    }
+    if (!row) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.json(row);
+  });
+});
+
 // Add new product
 router.post('/', (req, res) => {
   const { pname, description, quantity, price } = req.body;
