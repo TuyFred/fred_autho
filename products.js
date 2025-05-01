@@ -14,18 +14,23 @@ router.get('/', (req, res) => {
   });
 });
 
-// Get product by id
 router.get('/:pid', (req, res) => {
   const pid = req.params.pid;
+  console.log('Fetching product with pid:', pid); // 👈 Log this
+
   const query = 'SELECT * FROM products WHERE pid = ?';
   db.get(query, [pid], (err, row) => {
     if (err) {
-      console.error(err.message);
+      console.error('DB error:', err.message);
       return res.status(500).json({ message: 'Database error' });
     }
+
     if (!row) {
+      console.log('Product not found for pid:', pid);
       return res.status(404).json({ message: 'Product not found' });
     }
+
+    console.log('Product found:', row);
     res.json(row);
   });
 });

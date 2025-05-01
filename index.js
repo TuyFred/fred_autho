@@ -25,7 +25,7 @@ function authenticateToken(req, res, next) {
 }
 // Simple root route
 app.get('/', (req, res) => {
-  res.send('Fred API IS WORKING');
+  res.send('Fred API IS WORKING PROPERLY');
 });
 
 app.use('/auth', authRoutes);
