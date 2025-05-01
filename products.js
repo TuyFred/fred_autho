@@ -14,11 +14,10 @@ router.get('/', (req, res) => {
   });
 });
 
-// ✅ Get product by id
+// Get product by id
 router.get('/:pid', (req, res) => {
   const pid = req.params.pid;
   const query = 'SELECT * FROM products WHERE pid = ?';
-
   db.get(query, [pid], (err, row) => {
     if (err) {
       console.error(err.message);
@@ -30,6 +29,7 @@ router.get('/:pid', (req, res) => {
     res.json(row);
   });
 });
+
 
 // Add new product
 router.post('/', (req, res) => {
