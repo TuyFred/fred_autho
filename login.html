@@ -17,6 +17,9 @@
         <button type="submit">Login</button>
     </form>
     <div id="message"></div>
+    <div>
+        <a href="register.html">Don't have an account? Register here.</a>
+    </div>
 
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (event) => {
@@ -38,9 +41,10 @@
                 document.getElementById('message').innerText = data.message;
 
                 if (response.ok) {
-                    // Store the token or redirect the user
+                    // Store the token or redirect the user to the admin dashboard
                     console.log('Token:', data.token); // You can save the token for future use
-                    // Optionally, redirect to another page
+                    // Redirect to the admin dashboard
+                    window.location.href = 'dashboard.html'; // Change to your actual admin dashboard URL
                 }
             } catch (error) {
                 document.getElementById('message').innerText = 'An error occurred. Please try again.';

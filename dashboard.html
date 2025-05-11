@@ -1,187 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    input, button { padding: 8px; margin: 5px; }
+    .form-container { margin-top: 20px; }
+  </style>
 </head>
 <body>
-    <h1>Product Dashboard</h1>
+  <h1>Product Dashboard</h1>
 
-    <h2>Add Product</h2>
-    <form id="addProductForm">
-        <label for="pname">Name:</label>
-        <input type="text" id="pname" name="pname" required>
-        <br>
-        <label for="description">Description:</label>
-        <input type="text" id="description" name="description" required>
-        <br>
-        <label for="quantity">Quantity:</label>
-        <input type="number" id="quantity" name="quantity" required>
-        <br>
-        <label for="price">Price:</label>
-        <input type="number" id="price" name="price" required>
-        <br>
-        <button type="submit">Add Product</button>
-    </form>
+  <button onclick="fetchProducts()">Refresh Products</button>
 
-    <h2>Product List</h2>
-    <table id="productTable">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+  <table id="productTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    <div id="message"></div>
+  <div class="form-container">
+    <h2>Add New Product</h2>
+    <input type="text" id="pname" placeholder="Name" />
+    <input type="text" id="description" placeholder="Description" />
+    <input type="number" id="quantity" placeholder="Quantity" />
+    <input type="number" id="price" placeholder="Price" />
+    <button onclick="addProduct()">Add Product</button>
+  </div>
 
-    <script>
-        const apiUrl = 'https://fred-autho.onrender.com/products';
+  <script>
+    const API_URL = 'https://fred-autho.onrender.com/products/';
 
-        document.getElementById('addProductForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const pname = document.getElementById('pname').value;
-            const description = document.getElementById('description').value;
-            const quantity = document.getElementById('quantity').value;
-            const price = document.getElementById('price').value;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ pname, description, quantity, price }),
-                });
-
-                const data = await response.json();
-                document.getElementById('message').innerText = data.message;
-                if (response.ok) {
-                    document.getElementById('addProductForm').reset();
-                    loadProducts();
-                }
-            } catch (error) {
-                document.getElementById('message').innerText = 'An error occurred. Please try again.';
-                console.error('Error:', error);
-            }
-        });
-
-        async function loadProducts() {
-            try {
-                const response = await fetch(apiUrl);
-                const products = await response.json();
-                const tbody = document.querySelector('#productTable tbody');
-                tbody.innerHTML = '';
-
-                products.forEach(product => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${product.pid}</td>
-                        <td>${product.pname}</td>
-                        <td>${product.description}</td>
-                        <td>${product.quantity}</td>
-                        <td>${product.price}</td>
-                        <td>
-                            <button onclick="deleteProduct(${product.pid})">Delete</button>
-                            <button onclick="showUpdateForm(${product.pid}, '${product.pname}', '${product.description}', ${product.quantity}, ${product.price})">Update</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error loading products:', error);
-            }
-        }
-
-        async function deleteProduct(pid) {
-            try {
-                const response = await fetch(`${apiUrl}/${pid}`, {
-                    method: 'DELETE',
-                });
-
-                const data = await response.json();
-                document.getElementById('message').innerText = data.message;
-                loadProducts();
-            } catch (error) {
-                console.error('Error deleting product:', error);
-            }
-        }
-
-        function showUpdateForm(pid, pname, description, quantity, price) {
-            const updateForm = document.createElement('form');
-            updateForm.innerHTML = `
-                <h2>Update Product</h2>
-                <label for="updatePname">Name:</label>
-                <input type="text" id="updatePname" value="${pname}" required>
-                <br>
-                <label for="updateDescription">Description:</label>
-                <input type="text" id="updateDescription" value="${description}" required>
-                <br>
-                <label for="updateQuantity">Quantity:</label>
-                <input type="number" id="updateQuantity" value="${quantity}" required>
-                <br>
-                <label for="updatePrice">Price:</label>
-                <input type="number" id="updatePrice" value="${price}" required>
-                <br>
-                <button type="submit">Update Product</button>
+    function fetchProducts() {
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.querySelector('#productTable tbody');
+          tbody.innerHTML = '';
+          data.forEach(product => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${product.pid}</td>
+                <td>${product.pname}</td>
+                <td>${product.description}</td>
+                <td>${product.quantity}</td>
+                <td>${product.price}</td>
+                <td>
+                  <button onclick="deleteProduct(${product.pid})">Delete</button>
+                  <button onclick='editProduct(${product.pid}, \`${product.pname}\`, \`${product.description}\`, ${product.quantity}, ${product.price})'>Edit</button>
+                </td>
+              </tr>
             `;
-            document.body.appendChild(updateForm);
+          });
+        })
+        .catch(error => {
+          console.error('Failed to fetch products:', error);
+          alert('Error fetching products');
+        });
+    }
 
-            updateForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
+    function addProduct() {
+      const pname = document.getElementById('pname').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const quantity = parseInt(document.getElementById('quantity').value);
+      const price = parseFloat(document.getElementById('price').value);
 
-                const updatedPname = document.getElementById('updatePname').value;
-                const updatedDescription = document.getElementById('updateDescription').value;
-                const updatedQuantity = document.getElementById('updateQuantity').value;
-                const updatedPrice = document.getElementById('updatePrice').value;
+      if (!pname || !description || isNaN(quantity) || isNaN(price)) {
+        alert('Please fill all fields correctly.');
+        return;
+      }
 
-                try {
-                    const response = await fetch(`${apiUrl}/${pid}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ pname: updatedPname, description: updatedDescription, quantity: updatedQuantity, price: updatedPrice }),
-                    });
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pname, description, quantity, price })
+      })
+      .then(res => res.json())
+      .then(() => {
+        fetchProducts();
+        document.getElementById('pname').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('quantity').value = '';
+        document.getElementById('price').value = '';
+      })
+      .catch(err => {
+        console.error('Error adding product:', err);
+        alert('Failed to add product');
+      });
+    }
 
-                    const data = await response.json();
-                    document.getElementById('message').innerText = data.message;
-                    loadProducts();
-                    document.body.removeChild(updateForm);
-                } catch (error) {
-                    console.error('Error updating product:', error);
-                }
-            });
-        }
+    function deleteProduct(pid) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      fetch(`${API_URL}/${pid}`, {
+        method: 'DELETE'
+      })
+      .then(res => res.json())
+      .then(() => fetchProducts())
+      .catch(err => {
+        console.error('Error deleting product:', err);
+        alert('Failed to delete product');
+      });
+    }
 
-        // Load products when the page loads
-        loadProducts();
-    </script>
+    function editProduct(pid, pname, description, quantity, price) {
+      const newName = prompt('Edit Name:', pname);
+      const newDesc = prompt('Edit Description:', description);
+      const newQty = parseInt(prompt('Edit Quantity:', quantity));
+      const newPrice = parseFloat(prompt('Edit Price:', price));
+
+      if (!newName || !newDesc || isNaN(newQty) || isNaN(newPrice)) {
+        alert('Invalid input. Update canceled.');
+        return;
+      }
+
+      fetch(`${API_URL}/${pid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pname: newName,
+          description: newDesc,
+          quantity: newQty,
+          price: newPrice
+        })
+      })
+      .then(res => res.json())
+      .then(() => fetchProducts())
+      .catch(err => {
+        console.error('Error updating product:', err);
+        alert('Failed to update product');
+      });
+    }
+
+    // Load products on page load
+    fetchProducts();
+  </script>
 </body>
 </html>
+

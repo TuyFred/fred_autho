@@ -17,6 +17,9 @@
         <button type="submit">Register</button>
     </form>
     <div id="message"></div>
+    <div>
+        <a href="login.html">Already have an account? Login here.</a>
+    </div>
 
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (event) => {
@@ -38,8 +41,10 @@
                 document.getElementById('message').innerText = data.message;
 
                 if (response.ok) {
-                    // Optionally, redirect or clear the form
-                    document.getElementById('registerForm').reset();
+                    // Redirect to the login page after successful registration
+                    setTimeout(() => {
+                        window.location.href = 'login.html'; // Change to your actual login page URL
+                    }, 2000); // Optional delay before redirecting
                 }
             } catch (error) {
                 document.getElementById('message').innerText = 'An error occurred. Please try again.';
