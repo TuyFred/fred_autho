@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Product Dashboard</h1>
+
+    <h2>Add Product</h2>
+    <form id="addProductForm">
+        <label for="pname">Name:</label>
+        <input type="text" id="pname" name="pname" required>
+        <br>
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" required>
+        <br>
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" required>
+        <br>
+        <label for="price">Price:</label>
+        <input type="number" id="price" name="price" required>
+        <br>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <h2>Product List</h2>
+    <table id="productTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div id="message"></div>
+
+    <script>
+        const apiUrl = 'https://fred-autho.onrender.com/products';
+
+        document.getElementById('addProductForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const pname = document.getElementById('pname').value;
+            const description = document.getElementById('description').value;
+            const quantity = document.getElementById('quantity').value;
+            const price = document.getElementById('price').value;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pname, description, quantity, price }),
+                });
+
+                const data = await response.json();
+                document.getElementById('message').innerText = data.message;
+                if (response.ok) {
+                    document.getElementById('addProductForm').reset();
+                    loadProducts();
+                }
+            } catch (error) {
+                document.getElementById('message').innerText = 'An error occurred. Please try again.';
+                console.error('Error:', error);
+            }
+        });
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(apiUrl);
+                const products = await response.json();
+                const tbody = document.querySelector('#productTable tbody');
+                tbody.innerHTML = '';
+
+                products.forEach(product => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${product.pid}</td>
+                        <td>${product.pname}</td>
+                        <td>${product.description}</td>
+                        <td>${product.quantity}</td>
+                        <td>${product.price}</td>
+                        <td>
+                            <button onclick="deleteProduct(${product.pid})">Delete</button>
+                            <button onclick="showUpdateForm(${product.pid}, '${product.pname}', '${product.description}', ${product.quantity}, ${product.price})">Update</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        async function deleteProduct(pid) {
+            try {
+                const response = await fetch(`${apiUrl}/${pid}`, {
+                    method: 'DELETE',
+                });
+
+                const data = await response.json();
+                document.getElementById('message').innerText = data.message;
+                loadProducts();
+            } catch (error) {
+                console.error('Error deleting product:', error);
+            }
+        }
+
+        function showUpdateForm(pid, pname, description, quantity, price) {
+            const updateForm = document.createElement('form');
+            updateForm.innerHTML = `
+                <h2>Update Product</h2>
+                <label for="updatePname">Name:</label>
+                <input type="text" id="updatePname" value="${pname}" required>
+                <br>
+                <label for="updateDescription">Description:</label>
+                <input type="text" id="updateDescription" value="${description}" required>
+                <br>
+                <label for="updateQuantity">Quantity:</label>
+                <input type="number" id="updateQuantity" value="${quantity}" required>
+                <br>
+                <label for="updatePrice">Price:</label>
+                <input type="number" id="updatePrice" value="${price}" required>
+                <br>
+                <button type="submit">Update Product</button>
+            `;
+            document.body.appendChild(updateForm);
+
+            updateForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const updatedPname = document.getElementById('updatePname').value;
+                const updatedDescription = document.getElementById('updateDescription').value;
+                const updatedQuantity = document.getElementById('updateQuantity').value;
+                const updatedPrice = document.getElementById('updatePrice').value;
+
+                try {
+                    const response = await fetch(`${apiUrl}/${pid}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ pname: updatedPname, description: updatedDescription, quantity: updatedQuantity, price: updatedPrice }),
+                    });
+
+                    const data = await response.json();
+                    document.getElementById('message').innerText = data.message;
+                    loadProducts();
+                    document.body.removeChild(updateForm);
+                } catch (error) {
+                    console.error('Error updating product:', error);
+                }
+            });
+        }
+
+        // Load products when the page loads
+        loadProducts();
+    </script>
+</body>
+</html>
