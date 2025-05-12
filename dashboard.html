@@ -5,23 +5,172 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Product Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background-color: #f4f4f4; }
-    input, button { padding: 8px; margin: 5px; }
-    .form-container { margin-top: 20px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f6fa;
+      color: #333;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      font-size: 2rem;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    .logout-btn {
+      background-color: #e74c3c;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 1rem;
+    }
+
+    .logout-btn:hover {
+      background-color: #c0392b;
+    }
+
+    .form-container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      padding: 16px 20px;
+      width: 320px;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-container h3 {
+      color: #34495e;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .form-container input {
+      padding: 10px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .form-container button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .form-container button:hover {
+      background-color: #0069d9;
+    }
+
+    table {
+      width: 80%;
+      margin-top: 30px;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    table th,
+    table td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    table th {
+      background-color: #3498db;
+      color: white;
+      font-size: 1.1rem;
+    }
+
+    table td input {
+      width: 100%;
+      padding: 8px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    table td button {
+      padding: 8px 15px;
+      border-radius: 4px;
+      font-size: 1rem;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+
+    table td .delete {
+      background-color: #e74c3c;
+    }
+
+    table td .delete:hover {
+      background-color: #c0392b;
+    }
+
+    table td .update {
+      background-color: #f39c12;
+      color: black;
+    }
+
+    table td .update:hover {
+      background-color: #e67e22;
+    }
+
+    @media (max-width: 768px) {
+      .form-container {
+        width: 90%;
+      }
+
+      table {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Product Dashboard</h1>
 
-  <button onclick="fetchProducts()">Refresh Products</button>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+  <h2>Product Dashboard</h2>
 
-  <table id="productTable">
+  <div class="form-container">
+    <h3>Add New Product</h3>
+    <input type="text" id="pname" placeholder="Product Name" />
+    <input type="text" id="description" placeholder="Description" />
+    <input type="number" id="quantity" placeholder="Quantity" min="0" />
+    <input type="number" id="price" placeholder="Price" min="0" step="0.01" />
+    <button onclick="addProduct()">Add Product</button>
+  </div>
+
+  <table>
     <thead>
       <tr>
-        <th>ID</th>
+        <th>PID</th>
         <th>Name</th>
         <th>Description</th>
         <th>Quantity</th>
@@ -29,124 +178,153 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="productTable"></tbody>
   </table>
 
-  <div class="form-container">
-    <h2>Add New Product</h2>
-    <input type="text" id="pname" placeholder="Name" />
-    <input type="text" id="description" placeholder="Description" />
-    <input type="number" id="quantity" placeholder="Quantity" />
-    <input type="number" id="price" placeholder="Price" />
-    <button onclick="addProduct()">Add Product</button>
-  </div>
-
   <script>
-    const API_URL = 'https://fred-autho.onrender.com/products/';
+    const API_BASE = 'https://fred-autho.onrender.com/products/';
+    const token = localStorage.getItem('token');
 
-    function fetchProducts() {
-      fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          const tbody = document.querySelector('#productTable tbody');
-          tbody.innerHTML = '';
-          data.forEach(product => {
-            tbody.innerHTML += `
-              <tr>
-                <td>${product.pid}</td>
-                <td>${product.pname}</td>
-                <td>${product.description}</td>
-                <td>${product.quantity}</td>
-                <td>${product.price}</td>
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch(API_BASE, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+        const table = document.getElementById('productTable');
+        table.innerHTML = '';
+
+        if (Array.isArray(data) && data.length > 0) {
+          data.forEach(p => {
+            table.innerHTML += `
+              <tr data-pid="${p.pid}">
+                <td>${p.pid}</td>
+                <td><input value="${p.pname}" onchange="updateField(${p.pid}, 'pname', this.value)"></td>
+                <td><input value="${p.description}" onchange="updateField(${p.pid}, 'description', this.value)"></td>
+                <td><input type="number" value="${p.quantity}" onchange="updateField(${p.pid}, 'quantity', this.value)"></td>
+                <td><input type="number" value="${p.price}" onchange="updateField(${p.pid}, 'price', this.value)"></td>
                 <td>
-                  <button onclick="deleteProduct(${product.pid})">Delete</button>
-                  <button onclick='editProduct(${product.pid}, \`${product.pname}\`, \`${product.description}\`, ${product.quantity}, ${product.price})'>Edit</button>
+                  <button class="delete" onclick="deleteProduct(${p.pid})">Delete</button>
+                  <button class="update" onclick="updateProduct(${p.pid})">Update</button>
                 </td>
               </tr>
             `;
           });
-        })
-        .catch(error => {
-          console.error('Failed to fetch products:', error);
-          alert('Error fetching products');
+        } else {
+          table.innerHTML = '<tr><td colspan="6">No products available</td></tr>';
+        }
+      } catch (error) {
+        alert("Failed to load products.");
+        console.error(error);
+      }
+    }
+
+    async function addProduct() {
+      const pname = document.getElementById('pname').value;
+      const description = document.getElementById('description').value;
+      const quantity = document.getElementById('quantity').value;
+      const price = document.getElementById('price').value;
+
+      if (!pname || !description || !quantity || !price) {
+        alert("Please fill out all fields.");
+        return;
+      }
+
+      try {
+        const res = await fetch(API_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ pname, description, quantity, price })
         });
-    }
 
-    function addProduct() {
-      const pname = document.getElementById('pname').value.trim();
-      const description = document.getElementById('description').value.trim();
-      const quantity = parseInt(document.getElementById('quantity').value);
-      const price = parseFloat(document.getElementById('price').value);
-
-      if (!pname || !description || isNaN(quantity) || isNaN(price)) {
-        alert('Please fill all fields correctly.');
-        return;
-      }
-
-      fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pname, description, quantity, price })
-      })
-      .then(res => res.json())
-      .then(() => {
+        const data = await res.json();
+        alert(data.message || "Product added.");
         fetchProducts();
-        document.getElementById('pname').value = '';
-        document.getElementById('description').value = '';
-        document.getElementById('quantity').value = '';
-        document.getElementById('price').value = '';
-      })
-      .catch(err => {
-        console.error('Error adding product:', err);
-        alert('Failed to add product');
-      });
-    }
-
-    function deleteProduct(pid) {
-      if (!confirm('Are you sure you want to delete this product?')) return;
-      fetch(`${API_URL}/${pid}`, {
-        method: 'DELETE'
-      })
-      .then(res => res.json())
-      .then(() => fetchProducts())
-      .catch(err => {
-        console.error('Error deleting product:', err);
-        alert('Failed to delete product');
-      });
-    }
-
-    function editProduct(pid, pname, description, quantity, price) {
-      const newName = prompt('Edit Name:', pname);
-      const newDesc = prompt('Edit Description:', description);
-      const newQty = parseInt(prompt('Edit Quantity:', quantity));
-      const newPrice = parseFloat(prompt('Edit Price:', price));
-
-      if (!newName || !newDesc || isNaN(newQty) || isNaN(newPrice)) {
-        alert('Invalid input. Update canceled.');
-        return;
+      } catch (error) {
+        alert("Failed to add product.");
+        console.error(error);
       }
-
-      fetch(`${API_URL}/${pid}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pname: newName,
-          description: newDesc,
-          quantity: newQty,
-          price: newPrice
-        })
-      })
-      .then(res => res.json())
-      .then(() => fetchProducts())
-      .catch(err => {
-        console.error('Error updating product:', err);
-        alert('Failed to update product');
-      });
     }
 
-    // Load products on page load
+    async function deleteProduct(pid) {
+      try {
+        const res = await fetch(`${API_BASE}${pid}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json();
+        alert(data.message || "Product deleted.");
+        fetchProducts();
+      } catch (error) {
+        alert("Failed to delete product.");
+        console.error(error);
+      }
+    }
+
+    async function updateProduct(pid) {
+      const row = document.querySelector(`tr[data-pid="${pid}"]`);
+      const inputs = row.querySelectorAll('input');
+      const pname = inputs[0].value;
+      const description = inputs[1].value;
+      const quantity = inputs[2].value;
+      const price = inputs[3].value;
+
+      try {
+        const res = await fetch(`${API_BASE}${pid}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ pname, description, quantity, price })
+        });
+
+        const data = await res.json();
+        alert(data.message || "Product updated.");
+        fetchProducts();
+      } catch (error) {
+        alert("Failed to update product.");
+        console.error(error);
+      }
+    }
+
+    async function updateField(pid, field, value) {
+      try {
+        const res = await fetch(`${API_BASE}${pid}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ [field]: value })
+        });
+
+        const data = await res.json();
+        console.log(data.message || `${field} updated.`);
+      } catch (error) {
+        console.error(`Failed to update ${field}.`, error);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+
     fetchProducts();
   </script>
 </body>
 </html>
-
